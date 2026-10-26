@@ -2,6 +2,7 @@
 
 **Focus:** business systems design and workflow automation
 **Role:** designer, builder (AI-assisted), tester, and daily user
+**Stack:** web app on a Postgres database (Supabase), migrated from a Google Sheets workbook.
 **Status:** in daily use by me. Presented to agency leadership, who considered integration into the existing CRM. Not integrated company-wide.
 
 > Employer-related work. This page is a high-level case study. It contains no source code, customer data, or internal documents. All visuals use fictional customers.
@@ -41,26 +42,33 @@ Customer, quote line, opportunity, and post-sale task records
 
 ### What I verified in the system
 
-I checked these against a backup of the live workbook (structure only; no customer data is reproduced here).
+I checked the database schema and the original workbook structure. No customer data is reproduced here.
 
 | Capability | Evidence |
 |---|---|
-| Separate records for customers, quote lines, opportunities, and post-sale tasks | Four dedicated tabs with their own stages and follow-up fields |
-| Rules in tables, not code | Workflow tabs hold status, step, trigger basis, offset days, template key, and an enabled flag, one set per record type |
-| Template library | Roughly three dozen templates keyed to workflow steps |
+| Relational data model | 14 tables: customers, policy lines, opportunities, post-sale tasks, follow-up queue, text queue, documents, activity log, templates, workflow rules, settings, import batches, request log, job leases. Foreign keys tie every record to its customer |
+| Separate records for customers, quote lines, opportunities, and post-sale tasks | Dedicated tables with their own stages and follow-up fields |
+| Rules in tables, not code | A workflow-rules table holds status, step, trigger basis, offset days, template key, and an enabled flag, scoped to customer, opportunity, or task (31 rules) |
+| Template library | 33 templates keyed to workflow steps |
+| Data isolation | Row-level security is enabled on every table, and each row carries an owner |
+| Safe migration | The workbook was imported through tracked import batches, which have fields for record counts and a validation summary |
+| Safe retries | A request log stores each request's ID and digest, so a repeated request returns the stored response instead of repeating the work |
+| Document tracking | Policy documents are recorded with a file hash, version date, and a link to the document they supersede |
+| Current scale | 16 customer records, 66 queued follow-up actions, 92 activity-log events |
 | Idempotent queue | Each queue row has a deterministic ID built from record, action, and due date, plus a version stamp, so a rerun does not duplicate work |
 | AI-drafted messages | Queue rows record the draft source, model, and a hash of the context used |
 | Email and text channels | Separate email and text status, sent timestamps, skip reasons, and a text queue |
-| Safeguards | Preferred language, contact preference, hold-until date, and eligibility columns; a Needs Attention tab flags superseded drafts so they are not sent |
+| Safeguards | Preferred language, contact preference, hold-until date, and eligibility columns; superseded drafts are flagged so they are not sent |
 | Audit trail | Activity log with event time, result, source, and channel |
+| Scheduler | Built but switched off. A runtime flag keeps scheduled automation disabled until I enable it |
 | Renewal tracking | Renewals view for the next 60 days |
 
 ### Design decisions
 
-- **Rules as data.** Follow-up cadence is a table. Changing "day 1, 4, 8" to something else takes a cell edit.
+- **Rules as data.** Follow-up cadence is a table. Changing "day 1, 4, 8" to something else takes a one-row edit.
 - **Human in the loop.** The AI drafts. I review and send. This was a deliberate choice for a regulated, relationship-driven business.
 - **Superseded handling.** When a customer's status changes, older queued drafts are marked superseded and surfaced for cleanup instead of silently going out.
-- **Spreadsheet as the platform.** It fits how the agency already works, needs no new infrastructure, and keeps the data inspectable.
+- **Spreadsheet first, database second.** I proved the workflow in Google Sheets, where the rules were easy to see and change, then moved it to a relational database once the model was stable. The move added data isolation, retry safety, and a path to a web interface.
 
 ![Today view mockup](../assets/followup-today-mockup.svg)
 
@@ -68,8 +76,8 @@ I checked these against a backup of the live workbook (structure only; no custom
 
 - Defined the problem, the record model, and the follow-up logic from my own sales workflow.
 - Specified the guardrails and review steps.
-- Built the system with AI coding assistance, directing the design and reviewing the output.
-- Tested changes against a pre-change backup before applying them. A dated backup of the workbook exists for that purpose.
+- Built the system with AI coding assistance, directing the design and reviewing the output. I specified the data model and the migration plan.
+- Tested changes against a pre-change backup before applying them. A dated backup of the original workbook exists for that purpose.
 - Use it daily, which is where most of the improvements came from.
 
 ## Results
