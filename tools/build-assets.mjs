@@ -26,13 +26,13 @@ const write = (name, s) => writeFileSync(join(out, name), s);
 // 1. Follow-up CRM workflow
 {
   let b = head(900, 'Follow-up engine: from customer status to a reviewed message', 'Workflow diagram. Table-driven rules decide what is due; AI drafts; eligibility and review gate every send.');
-  b += box(24, 90, 180, 56, 'CRM + Quote Lines', 'customers, quoted lines, renewals', { fill: C.blueSoft, stroke: C.blue });
+  b += box(24, 90, 180, 56, 'CRM + Quote Lines', 'customers, quotes, renewals', { fill: C.blueSoft, stroke: C.blue });
   b += box(24, 160, 180, 56, 'Opportunities', 'future / waiting-on-budget', { fill: C.blueSoft, stroke: C.blue });
   b += box(24, 230, 180, 56, 'Post-Sale Tasks', 'documents, programs', { fill: C.blueSoft, stroke: C.blue });
-  b += box(260, 140, 170, 90, 'Workflow rules', 'status + step + offset days + template', { fill: C.amberSoft, stroke: C.amber });
-  b += box(480, 140, 170, 90, 'Follow-Up Engine', 'one queue row per action, deterministic ID', { fill: C.tealSoft, stroke: C.teal });
-  b += box(700, 90, 176, 56, 'AI draft', 'email + text, per-customer context', { fill: C.soft });
-  b += box(700, 160, 176, 56, 'Eligibility + hold checks', 'contact preference, hold-until, language', { fill: C.soft });
+  b += box(260, 140, 170, 90, 'Workflow rules', 'status, step, offset, template', { fill: C.amberSoft, stroke: C.amber });
+  b += box(480, 140, 170, 90, 'Follow-Up Engine', 'one row per action, fixed ID', { fill: C.tealSoft, stroke: C.teal });
+  b += box(700, 90, 176, 56, 'AI draft', 'email + text per customer', { fill: C.soft });
+  b += box(700, 160, 176, 56, 'Eligibility + hold checks', 'preference, hold date, language', { fill: C.soft });
   b += box(700, 230, 176, 56, 'Owner reviews and sends', 'email draft, text queue', { fill: C.soft });
   b += box(480, 330, 170, 56, 'Activity Log', 'every send, skip, result', { fill: C.soft });
   b += box(260, 330, 170, 56, 'Needs Attention', 'superseded or stale drafts', { fill: C.redSoft, stroke: C.red });
@@ -97,7 +97,7 @@ const write = (name, s) => writeFileSync(join(out, name), s);
   let b = head(900, 'CoreOps CRM: lead-to-customer pipeline', 'Each step is a separate, guarded module. Paid providers sit behind a cost guard; every send passes one eligibility gate.');
   const steps = [['Discover', 'scheduled map search'], ['Dedupe', 'against existing prospects'], ['Enrich', 'site crawl, email lookup'], ['Score', 'opportunity grade'], ['Eligibility gate', 'verify, suppress, cooldown'], ['Campaign', 'paced multi-step email'], ['Replies', 'classify, STOP / HOLD'], ['Pipeline', 'stages, tasks, My Day']];
   steps.forEach((s2, i) => { const x = 24 + (i % 4) * 220, y = 90 + Math.floor(i / 4) * 110; b += box(x, y, 190, 62, s2[0], s2[1], { fill: i === 4 ? C.amberSoft : i < 4 ? C.blueSoft : C.tealSoft, stroke: i === 4 ? C.amber : i < 4 ? C.blue : C.teal }); if (i % 4 < 3) b += arrow(x + 190, y + 31, x + 220, y + 31); });
-  b += arrow(110, 152, 110, 200).replace('y2="200"', 'y2="200"'); // visual hint only
+  b += `<path d="M 794 152 L 794 171 L 119 171 L 119 200" fill="none" stroke="${C.mute}" stroke-width="1.5" marker-end="url(#a)"/>`;
   b += box(24, 320, 852, 52, 'Google Sheet (system of record) + Apps Script web app with role-based access', 'time-driven triggers, provider cost guard, audit ledgers', { fill: C.soft });
   write('coreops-pipeline.svg', svg(900, 400, b, 'CoreOps pipeline'));
 
