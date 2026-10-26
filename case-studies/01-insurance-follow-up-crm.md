@@ -2,13 +2,13 @@
 
 **Focus:** business systems design and workflow automation
 **Role:** designer, builder (AI-assisted), tester, and daily user
-**Status:** in daily use by me. Shared with agency leadership for evaluation. Not integrated company-wide.
+**Status:** in daily use by me. Presented to agency leadership, who considered integration into the existing CRM. Not integrated company-wide.
 
 > Employer-related work. This page is a high-level case study. It contains no source code, customer data, or internal documents. All visuals use fictional customers.
 
 ## Executive summary
 
-Insurance sales is a follow-up business. Quotes go cold when nobody checks back at the right time, in the right channel, in the customer's language. I built a follow-up CRM that turns each customer's status into a dated, reviewable action: who to contact today, why, through which channel, with a drafted message ready to review. I use it every day. I presented it to the agency's Sales Director and Operations Manager, then shared it for evaluation against the agency's existing CRM.
+Insurance sales is a follow-up business. Quotes go cold when nobody checks back at the right time, in the right channel, in the customer's language. I built a follow-up CRM that turns each customer's status into a dated, reviewable action: who to contact today, why, through which channel, with a drafted message ready to review. I use it every day. I presented it to the agency's Sales Director and Operations Manager, and leadership considered integrating it into the agency's existing CRM.
 
 ## The business problem
 
@@ -76,7 +76,7 @@ I checked these against a backup of the live workbook (structure only; no custom
 
 Verified:
 - The system is in daily use for my own customer follow-ups.
-- I demonstrated it to the agency's Sales Director and Operations Manager and shared it for evaluation.
+- I presented it to the agency's Sales Director and Operations Manager. Leadership considered integration into the existing CRM.
 
 Not claimed:
 - No company-wide rollout or integration has happened.
@@ -92,8 +92,3 @@ Not claimed:
 
 - Track quote-to-bind rate before and after consistent follow-up, so impact can be stated in numbers.
 - Document a clean hand-off path if leadership wants to fold the workflow into the agency CRM.
-
-## Open items before publishing
-
-- Confirm which employer details I am allowed to name.
-- Confirm the record count and approval to cite the leadership presentation.

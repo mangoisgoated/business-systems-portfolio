@@ -5,10 +5,13 @@
 **Status:** used by two agents. Broader adoption under consideration.
 
 > Employer-related work. All figures, rates, agents, and carriers on this page are fictional. They illustrate the method, not the agency's compensation plan.
+> The charts below use invented thresholds and are labeled illustrative.
 
 ## Executive summary
 
-I built a commission tracker in Google Sheets that logs written premium, applies the compensation tier, and projects earnings. Using it, I found that the structure of the premium production requirements produced results that did not match their intent. I took the analysis to management. Management confirmed that my findings directly influenced an agency-wide adjustment to premium production requirements.
+Developed a commission analysis and tracking system that revealed inefficiencies between production requirements and agent earnings across compensation tiers. Presented findings to leadership, directly influencing agency-wide adjustments to premium production requirements.
+
+The system is a Google Sheets tracker that logs written premium, applies the compensation tier, and projects earnings. This page covers the method, the business problem, and the organizational impact. The agency's actual rates and formulas are confidential and are not shown.
 
 ## The business problem
 
@@ -50,13 +53,11 @@ In this synthetic set of 120 agent-months, lowering the top threshold from $50k 
 
 ## Communicating the findings
 
-I presented the analysis to management with the model behind it, so the numbers could be checked and the scenarios rerun.
-
-<!-- MARCO: add 2-3 sentences in your own words: who you presented to, what you showed first, and how it was received. -->
+I presented the findings to leadership with the model behind them, so the numbers could be checked and the scenarios rerun.
 
 ## Outcome
 
-- Management confirmed my findings directly influenced agency-wide adjustments to premium production requirements. (Reported by me, based on management's confirmation.)
+- The findings directly influenced agency-wide adjustments to premium production requirements.
 - Two agents use the tracker. Wider adoption is under consideration.
 
 ## Skills shown
@@ -68,8 +69,3 @@ Spreadsheet modeling (tiered logic, lookups, conditional summaries, dropdown-dri
 - A model earns trust when others can rerun it. The separate calculator tab mattered more than the dashboard.
 - Keep history. Monthly records are what turn a feeling into evidence.
 - Confidential data needs a fictional twin for any public discussion.
-
-## Open items before publishing
-
-- Add the real before/after policy change in terms I am allowed to disclose.
-- Confirm permission to cite management's confirmation and the two-agent usage.
