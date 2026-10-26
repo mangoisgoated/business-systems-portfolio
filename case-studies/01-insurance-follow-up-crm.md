@@ -5,6 +5,8 @@
 **Stack:** web app on a Postgres database (Supabase), migrated from a Google Sheets workbook.
 **Status:** in daily use by me. Presented to agency leadership, who considered integration into the existing CRM. Not integrated company-wide.
 
+> Try the [interactive demo](https://mangoisgoated.github.io/business-systems-portfolio/demo/) (fictional data, runs in your browser).
+>
 > Employer-related work. This page is a high-level case study. It contains no source code, customer data, or internal documents. All visuals use fictional customers.
 
 ## Executive summary

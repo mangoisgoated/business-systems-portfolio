@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Follow-Up CRM Demo | Marco Martinez</title>
+<meta name="description" content="Interactive demo of a rules-driven follow-up workflow. Fictional data only.">
+<style>
+:root{--ink:#1f2933;--mute:#52606d;--line:#d9e2ec;--bg:#fff;--soft:#f5f7fa;--accent:#1d4ed8;--ok:#0f766e;--warn:#b45309;--bad:#b91c1c;--tag:#e8efff}
+@media (prefers-color-scheme:dark){:root{--ink:#e4e7eb;--mute:#9aa5b1;--line:#323f4b;--bg:#12181f;--soft:#1b242d;--accent:#7aa2ff;--ok:#5eead4;--warn:#fbbf24;--bad:#fca5a5;--tag:#23314d}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.55 "Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px 48px}
+header{padding:28px 0 12px}
+h1{font-size:clamp(1.4rem,4.5vw,1.9rem);margin:0 0 4px}
+.sub{color:var(--mute);margin:0}
+.banner{background:var(--tag);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:14px 0;font-size:.9rem}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}
+nav button{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+nav button[aria-selected=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+nav button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section[hidden]{display:none}
+.card{border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:14px 16px;margin:12px 0}
+.card h3{margin:0 0 4px;font-size:1rem}
+.meta{color:var(--mute);font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.pill{display:inline-block;font-size:.75rem;padding:1px 9px;border-radius:999px;background:var(--tag)}
+.pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}
+pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;font:inherit}
+.btn{font:inherit;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--accent)}
+.btn[disabled]{opacity:.5;cursor:default}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;font-size:.88rem}
+th{color:var(--mute);font-weight:600}
+input[type=number],select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+input[type=number]{width:70px}
+.empty{color:var(--mute);padding:12px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>Follow-Up CRM: interactive demo</h1>
+<p class="sub">Status and dates become a daily list of reviewable actions. Rules are data, drafts are reviewed by a person.</p>
+<div class="banner"><strong>Fictional data only.</strong> Every customer here is invented. This page runs entirely in your browser, connects to nothing, and stores nothing.</div>
+</header>
+
+<nav role="tablist" aria-label="Demo views">
+<button role="tab" aria-selected="true" data-tab="today">Today</button>
+<button role="tab" aria-selected="false" data-tab="rules">Rules</button>
+<button role="tab" aria-selected="false" data-tab="customers">Customers</button>
+<button role="tab" aria-selected="false" data-tab="log">Activity log</button>
+</nav>
+
+<section id="today"></section>
+<section id="rules" hidden></section>
+<section id="customers" hidden></section>
+<section id="log" hidden></section>
+
+<p class="meta">Try it: on <em>Rules</em>, change an offset and watch <em>Today</em> change. On <em>Customers</em>, change a status, then look for the superseded draft on <em>Today</em>. Approve a draft and see it recorded in the log.</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+var DAY=86400000;
+function startOfToday(){var d=new Date();d.setHours(0,0,0,0);return d.getTime();}
+var TODAY=startOfToday();
+function dayStr(ms){return new Date(ms).toLocaleDateString(undefined,{month:"short",day:"numeric"});}
+
+// Rules as data: status + step -> offset days from the trigger date, template key.
+var rules=[
+ {status:"Quoted",step:1,offset:1,tpl:"quote_checkin"},
+ {status:"Quoted",step:2,offset:4,tpl:"quote_nudge"},
+ {status:"Quoted",step:3,offset:8,tpl:"quote_final"},
+ {status:"Renewal",step:1,offset:-30,tpl:"renewal_notice"},
+ {status:"New customer",step:1,offset:3,tpl:"welcome_checkin"}
+];
+var templates={
+ quote_checkin:{en:"Hi {name}, thanks for letting me quote your {line}. Did you have any questions about the options?",es:"Hola {name}, gracias por dejarme cotizar su {line}. ¿Tiene alguna pregunta sobre las opciones?"},
+ quote_nudge:{en:"Hi {name}, I wanted to follow up on your {line} quote. Happy to adjust coverage or answer questions.",es:"Hola {name}, quería dar seguimiento a su cotización de {line}. Con gusto ajusto la cobertura o respondo preguntas."},
+ quote_final:{en:"Hi {name}, last check-in on your {line} quote. If timing changed, just tell me and I will update it.",es:"Hola {name}, último seguimiento de su cotización de {line}. Si cambió el momento, avíseme y la actualizo."},
+ renewal_notice:{en:"Hi {name}, your {line} renews soon. Want me to review your options before then?",es:"Hola {name}, su {line} se renueva pronto. ¿Quiere que revise sus opciones antes?"},
+ welcome_checkin:{en:"Hi {name}, welcome aboard. Checking that your {line} paperwork looks right.",es:"Hola {name}, bienvenido. Verifico que los documentos de su {line} estén correctos."}
+};
+// Invented customers. "base" is the trigger date, as days from today.
+var customers=[
+ {id:"C1",name:"Dana Brooks",line:"auto policy",status:"Quoted",base:-1,lang:"en",pref:"Email",hold:null},
+ {id:"C2",name:"Luis Herrera",line:"home policy",status:"Quoted",base:-4,lang:"es",pref:"Text",hold:null},
+ {id:"C3",name:"Priya Nair",line:"renters policy",status:"Quoted",base:-8,lang:"en",pref:"Email",hold:null},
+ {id:"C4",name:"Tom Albright",line:"auto policy",status:"Renewal",base:30,lang:"en",pref:"Email",hold:null},
+ {id:"C5",name:"Marisol Vega",line:"home policy",status:"New customer",base:-3,lang:"es",pref:"Text",hold:null},
+ {id:"C6",name:"Evan Cole",line:"auto policy",status:"Quoted",base:-4,lang:"en",pref:"Email",hold:+5}
+];
+var statuses=["Quoted","Renewal","New customer","Bound","Lost"];
+var done={};        // queue id -> "sent"
+var superseded={};  // queue id -> true
+var log=[];
+var shownIds={};    // queue ids ever shown, to detect superseded drafts
+
+function qid(c,r){return c.id+"|"+r.status+"|"+r.step+"|"+(TODAY+(c.base+r.offset)*DAY);}
+
+function buildQueue(){
+ var out=[];
+ customers.forEach(function(c){
+  rules.forEach(function(r){
+   if(r.status!==c.status) return;
+   var due=TODAY+(c.base+r.offset)*DAY;
+   var id=qid(c,r);
+   if(due>TODAY) return;                       // not due yet
+   var held=c.hold!==null&&TODAY<TODAY+c.hold*DAY;
+   out.push({id:id,c:c,r:r,due:due,held:held});
+  });
+ });
+ return out;
+}
+function draft(c,r){
+ var t=templates[r.tpl][c.lang];
+ return t.replace("{name}",c.name.split(" ")[0]).replace("{line}",c.line);
+}
+function addLog(c,result,note){log.unshift({t:new Date(),c:c.name,result:result,note:note});}
+function h(s){return String(s).replace(/[&<>"]/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m];});}
+
+function renderToday(){
+ var q=buildQueue();
+ q.forEach(function(x){shownIds[x.id]=x;});
+ var live=q.filter(function(x){return !done[x.id];});
+ var html='<h2>Today: '+dayStr(TODAY)+'</h2>';
+ if(!live.length) html+='<p class="empty">Nothing due. Change a rule or a customer status to see the queue react.</p>';
+ live.forEach(function(x){
+  var blocked=x.held;
+  html+='<div class="card"><div class="row"><h3>'+h(x.c.name)+'</h3>'+
+   '<span class="pill">'+h(x.r.status)+' · step '+x.r.step+'</span>'+
+   '<span class="pill">'+(x.c.lang==="es"?"Spanish":"English")+'</span>'+
+   '<span class="pill">Prefers '+h(x.c.pref)+'</span>'+
+   (blocked?'<span class="pill warn">Hold until '+dayStr(TODAY+x.c.hold*DAY)+'</span>':'<span class="pill ok">Eligible</span>')+
+   '</div><div class="meta">Queue ID <code>'+h(x.id.replace(/\|\d+$/,"|"+dayStr(x.due)))+'</code> · due '+dayStr(x.due)+' · rule: day '+(x.r.offset>=0?"+":"")+x.r.offset+' from trigger</div>'+
+   '<pre>'+h(draft(x.c,x.r))+'</pre>'+
+   '<button class="btn" data-approve="'+h(x.id)+'"'+(blocked?" disabled":"")+'>Review done: mark sent</button> '+
+   '<button class="btn alt" data-skip="'+h(x.id)+'">Skip</button>'+
+   (blocked?' <span class="meta">Blocked by hold date, cannot be sent.</span>':'')+'</div>';
+ });
+ // Superseded: queued earlier but no longer produced by current state.
+ var current={};q.forEach(function(x){current[x.id]=1;});
+ var sup=Object.keys(shownIds).filter(function(id){return !current[id]&&!done[id];});
+ if(sup.length){
+  html+='<h2>Needs attention</h2>';
+  sup.forEach(function(id){var x=shownIds[id];
+   html+='<div class="card"><div class="row"><h3>'+h(x.c.name)+'</h3><span class="pill bad">Superseded draft</span></div>'+
+    '<div class="meta">This draft no longer matches the customer’s current status or rules, so it will not be sent.</div>'+
+    '<button class="btn alt" data-clear="'+h(id)+'">Clear</button></div>';});
+ }
+ document.getElementById("today").innerHTML=html;
+}
+function renderRules(){
+ var html='<h2>Workflow rules</h2><p class="meta">Cadence lives in a table. Edit an offset; no code changes.</p><div class="tablewrap"><table><tr><th>Status</th><th>Step</th><th>Offset (days)</th><th>Template</th></tr>';
+ rules.forEach(function(r,i){html+='<tr><td>'+h(r.status)+'</td><td>'+r.step+'</td><td><input type="number" data-rule="'+i+'" value="'+r.offset+'" aria-label="Offset days for '+h(r.status)+' step '+r.step+'"></td><td><code>'+h(r.tpl)+'</code></td></tr>';});
+ html+='</table></div>';
+ document.getElementById("rules").innerHTML=html;
+}
+function renderCustomers(){
+ var html='<h2>Customers (fictional)</h2><div class="tablewrap"><table><tr><th>Name</th><th>Status</th><th>Language</th><th>Contact</th><th>Trigger date</th></tr>';
+ customers.forEach(function(c,i){
+  html+='<tr><td>'+h(c.name)+'</td><td><select data-cust="'+i+'" aria-label="Status for '+h(c.name)+'">'+
+   statuses.map(function(s){return '<option'+(s===c.status?" selected":"")+'>'+s+'</option>';}).join("")+'</select></td><td>'+(c.lang==="es"?"Spanish":"English")+'</td><td>'+h(c.pref)+'</td><td>'+dayStr(TODAY+c.base*DAY)+'</td></tr>';});
+ html+='</table></div>';
+ document.getElementById("customers").innerHTML=html;
+}
+function renderLog(){
+ var html='<h2>Activity log</h2>';
+ if(!log.length) html+='<p class="empty">No activity yet. Approve or skip a draft on Today.</p>';
+ else{html+='<div class="tablewrap"><table><tr><th>Time</th><th>Customer</th><th>Result</th><th>Note</th></tr>';
+  log.forEach(function(e){html+='<tr><td>'+e.t.toLocaleTimeString()+'</td><td>'+h(e.c)+'</td><td>'+h(e.result)+'</td><td>'+h(e.note)+'</td></tr>';});
+  html+='</table></div>';}
+ document.getElementById("log").innerHTML=html;
+}
+function renderAll(){renderToday();renderRules();renderCustomers();renderLog();}
+
+document.addEventListener("click",function(e){
+ var t=e.target;
+ if(t.dataset.tab){
+  document.querySelectorAll("nav button").forEach(function(b){b.setAttribute("aria-selected",b===t?"true":"false");});
+  ["today","rules","customers","log"].forEach(function(id){document.getElementById(id).hidden=id!==t.dataset.tab;});
+  return;}
+ var id;
+ if((id=t.dataset.approve)){var x=shownIds[id];done[id]="sent";addLog(x.c,"Reviewed and marked sent","Draft "+x.r.tpl+" via "+x.c.pref+" (simulated, nothing was sent)");renderToday();renderLog();}
+ else if((id=t.dataset.skip)){var y=shownIds[id];done[id]="skipped";addLog(y.c,"Skipped","Skipped by reviewer");renderToday();renderLog();}
+ else if((id=t.dataset.clear)){var z=shownIds[id];done[id]="cleared";addLog(z.c,"Superseded draft cleared","Status or rules changed after drafting");renderToday();renderLog();}
+});
+document.addEventListener("change",function(e){
+ var t=e.target;
+ if(t.dataset.rule!==undefined){var v=parseInt(t.value,10);if(!isNaN(v)){rules[+t.dataset.rule].offset=v;renderToday();}}
+ else if(t.dataset.cust!==undefined){var c=customers[+t.dataset.cust];c.status=t.value;addLog(c,"Status changed","Now "+t.value);renderToday();renderLog();}
+});
+renderAll();
+})();
+</script>
+</body>
+</html>
